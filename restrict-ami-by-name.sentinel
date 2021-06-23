@@ -1,0 +1,25 @@
+# This policy requires all EC2 instances to have their ami field
+# set to an AWS AMI that is part of the "allowed_images" list.
+
+# Import common-functions/tfconfig-functions/tfconfig-functions.sentinel
+# with alias "config"
+import "tfconfig-functions" as config
+
+# Allowed AMI images
+allowed_images = ["ami-043097594a7df80ec", "ami-043097594a7d1fake", "ami-043097594a7d1233fake"]
+
+# Get all EC2 instances
+allEC2Instances = config.find_resources_by_type("aws_instance")
+
+# Filter to AMIs with violations, meaning EC2 instances that use an AMI that is not in contained in the "allowed_images" list.
+# Warnings will be printed for all violations since the last parameter is true
+violatingAMIs =
+  config.filter_attribute_not_in_list(allEC2Instances, "config.ami", allowed_images, true)
+
+# Count EC2 instance violations
+AMIViolations = length(violatingAMIs["messages"])
+
+# Main rule
+main = rule {
+  AMIViolations is 0
+}
